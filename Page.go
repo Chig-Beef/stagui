@@ -19,6 +19,7 @@ type Page struct {
 	Sliders         []*Slider
 	Text            []*StaticText
 	InlineTextBoxes []*InlineTextBox
+	TextBoxes       []*TextBox
 
 	// Whether the bg will be drawn
 	BgDraw bool
@@ -42,6 +43,9 @@ func (p *Page) Update(curMousePos [2]int) (string, *Button, *Slider) {
 	for _, itb := range p.InlineTextBoxes {
 		itb.Update()
 	}
+	for _, tb := range p.TextBoxes {
+		tb.Update()
+	}
 
 	// Check whether they're even pressing
 	// the left mouse button. We don't care
@@ -59,6 +63,9 @@ func (p *Page) Update(curMousePos [2]int) (string, *Button, *Slider) {
 	// Mouse press
 	for _, itb := range p.InlineTextBoxes {
 		itb.CheckClick(curMousePos[0], curMousePos[1])
+	}
+	for _, tb := range p.TextBoxes {
+		tb.CheckClick(curMousePos[0], curMousePos[1])
 	}
 
 	return "", nil, nil
@@ -100,5 +107,9 @@ func (p *Page) Draw(screen *ebiten.Image, ih ImageHandler, fh FontHandler, sw, s
 
 	for _, itb := range p.InlineTextBoxes {
 		itb.Draw(screen, fh)
+	}
+
+	for _, tb := range p.TextBoxes {
+		tb.Draw(screen, fh)
 	}
 }
