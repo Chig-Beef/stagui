@@ -15,6 +15,7 @@ type InlineTextBox struct {
 
 	Text      string
 	TextColor color.Color
+	FontSize  float64
 
 	BgColor color.Color
 
@@ -30,7 +31,7 @@ type InlineTextBox struct {
 func (itb *InlineTextBox) Draw(screen *ebiten.Image, fh FontHandler) {
 	vector.DrawFilledRect(screen, float32(itb.X), float32(itb.Y), float32(itb.W), float32(itb.H), itb.BgColor, false)
 
-	fh.DrawText(screen, itb.Text, 30, itb.X+4, itb.Y+2, fh.GetFont("textBox"), &text.DrawOptions{})
+	fh.DrawText(screen, itb.Text, itb.FontSize, itb.X+4, itb.Y+2, fh.GetFont("textBox"), &text.DrawOptions{})
 
 	// Draw a line at the bottom of the textbox
 	if itb.Active {

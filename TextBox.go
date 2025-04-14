@@ -16,6 +16,7 @@ type TextBox struct {
 
 	Text      []string
 	TextColor color.Color
+	FontSize  float64
 
 	BgColor color.Color
 
@@ -32,7 +33,7 @@ func (tb *TextBox) Draw(screen *ebiten.Image, fh FontHandler) {
 	vector.DrawFilledRect(screen, float32(tb.X), float32(tb.Y), float32(tb.W), float32(tb.H), tb.BgColor, false)
 
 	for i := range len(tb.Text) {
-		fh.DrawText(screen, tb.Text[i], 30, tb.X+4, tb.Y+2+float64(i)*32, fh.GetFont("textBox"), &text.DrawOptions{})
+		fh.DrawText(screen, tb.Text[i], tb.FontSize, tb.X+4, tb.Y+2+float64(i)*(tb.FontSize+2), fh.GetFont("textBox"), &text.DrawOptions{})
 	}
 
 	// Draw a line at the bottom of the textbox
