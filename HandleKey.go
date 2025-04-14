@@ -79,6 +79,26 @@ func handleKey() (string, ebiten.Key) {
 		text = "None"
 	case ebiten.KeyMetaRight:
 		text = "None"
+	case ebiten.KeyNumpad0:
+		text = "None"
+	case ebiten.KeyNumpad1:
+		text = "None"
+	case ebiten.KeyNumpad2:
+		text = "None"
+	case ebiten.KeyNumpad3:
+		text = "None"
+	case ebiten.KeyNumpad4:
+		text = "None"
+	case ebiten.KeyNumpad5:
+		text = "None"
+	case ebiten.KeyNumpad6:
+		text = "None"
+	case ebiten.KeyNumpad7:
+		text = "None"
+	case ebiten.KeyNumpad8:
+		text = "None"
+	case ebiten.KeyNumpad9:
+		text = "None"
 	default:
 		text = strings.ToLower(k.String())
 	}
@@ -142,6 +162,26 @@ func handleKeyWithShift(k ebiten.Key) (string, ebiten.Key) {
 	case ebiten.KeyMetaLeft:
 		text = "None"
 	case ebiten.KeyMetaRight:
+		text = "None"
+	case ebiten.KeyNumpad0:
+		text = "None"
+	case ebiten.KeyNumpad1:
+		text = "None"
+	case ebiten.KeyNumpad2:
+		text = "None"
+	case ebiten.KeyNumpad3:
+		text = "None"
+	case ebiten.KeyNumpad4:
+		text = "None"
+	case ebiten.KeyNumpad5:
+		text = "None"
+	case ebiten.KeyNumpad6:
+		text = "None"
+	case ebiten.KeyNumpad7:
+		text = "None"
+	case ebiten.KeyNumpad8:
+		text = "None"
+	case ebiten.KeyNumpad9:
 		text = "None"
 	default:
 		text = k.String()
