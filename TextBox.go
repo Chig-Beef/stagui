@@ -82,7 +82,19 @@ func (tb *TextBox) Update() {
 	case ebiten.KeyContextMenu:
 
 	case ebiten.KeyEnter:
-		tb.Active = false
+		if tb.KeyPosX == len(tb.Text[tb.KeyPosY]) {
+			tb.Text = slices.Insert(tb.Text, tb.KeyPosY+1, "")
+			tb.KeyPosY++
+			tb.KeyPosX = 0
+			break
+		}
+
+		tb.Text = slices.Insert(tb.Text, tb.KeyPosY+1, tb.Text[tb.KeyPosY][tb.KeyPosX:])
+		tb.Text[tb.KeyPosY] = tb.Text[tb.KeyPosY][:tb.KeyPosX]
+
+		tb.KeyPosY++
+		tb.KeyPosX = 0
+
 	case ebiten.KeyBackspace:
 		// First line
 		if tb.KeyPosY == 0 {
@@ -94,6 +106,7 @@ func (tb *TextBox) Update() {
 
 			tb.Text[tb.KeyPosY] = tb.Text[tb.KeyPosY][:tb.KeyPosX-1] + tb.Text[tb.KeyPosY][tb.KeyPosX:]
 			tb.KeyPosX--
+			break
 		}
 
 		// Any other line
