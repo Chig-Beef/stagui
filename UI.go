@@ -162,6 +162,8 @@ func (ui *UI) loadPageBlockStatement(node *Node, page *Page) {
 		page.BgColor = ui.loadBgColorCommand(node)
 	case N_BUTTON_DEF:
 		ui.loadButtonDef(node, page)
+	case N_PANEL_DEF:
+		ui.loadPanelDef(node, page)
 	case N_PLAINTEXT_DEF:
 		ui.loadPlainTextDef(node, page)
 	default:
