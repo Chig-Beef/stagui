@@ -70,6 +70,19 @@ func (ui *UI) loadButtonDef(node *Node, page *Page) {
 	page.Buttons = append(page.Buttons, &button)
 }
 
+func (ui *UI) loadPanelDef(node *Node, page *Page) {
+	panel := Panel{}
+
+	// Get name without quotes
+	name := node.Children[1].Data
+	name = name[1:len(name)-1]
+	panel.Name = name
+
+	ui.loadPanelBlock(node.Children[2], &panel)
+
+	page.Panels = append(page.Panels, &panel)
+}
+
 func (ui *UI) loadPlainTextDef(node *Node, page *Page) {
 	plainText := PlainText{}
 
@@ -112,6 +125,12 @@ func (ui *UI) loadPageBlock(node *Node, page *Page) {
 func (ui *UI) loadButtonBlock(node *Node, button *Button) {
 	for _, command := range node.Children {
 		ui.loadButtonBlockStatement(command, button)
+	}
+}
+
+func (ui *UI) loadPanelBlock(node *Node, panel *Panel) {
+	for _, command := range node.Children {
+		ui.loadPanelBlockStatement(command, panel)
 	}
 }
 
@@ -166,6 +185,23 @@ func (ui *UI) loadButtonBlockStatement(node *Node, button *Button) {
 		button.Text = ui.loadTextDataDef(node)
 	default:
 		panic(fmt.Sprintf("Invalid start to button statement %s (%s)", node.Data, node.Kind.String()))
+	}
+}
+
+func (ui *UI) loadPanelBlockStatement(node *Node, panel *Panel) {
+	switch node.Kind {
+	case N_STAT_BGCOLOR:
+		panel.Bg.Color = ui.loadBgColorCommand(node)
+	case N_STAT_X:
+		panel.X = ui.loadXCommand(node)
+	case N_STAT_Y:
+		panel.Y = ui.loadYCommand(node)
+	case N_STAT_W:
+		panel.W = ui.loadWCommand(node)
+	case N_STAT_H:
+		panel.H = ui.loadHCommand(node)
+	default:
+		panic(fmt.Sprintf("Invalid start to panel statement %s (%s)", node.Data, node.Kind.String()))
 	}
 }
 

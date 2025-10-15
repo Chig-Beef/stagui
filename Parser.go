@@ -153,6 +153,26 @@ func (parser *Parser) parseButtonDef() *Node {
 	return &n
 }
 
+func (parser *Parser) parsePanelDef() *Node {
+	n := Node{Kind: N_PANEL_DEF}
+
+	if parser.curToken.kind != T_PANEL {
+		panic("Expected PANEL in panel def")
+	}
+	n.addChild(&Node{Kind: N_PANEL})
+	parser.nextToken()
+
+	if parser.curToken.kind != T_STRING {
+		panic("Expected string in panel def")
+	}
+	n.addChild(&Node{Kind: N_STRING, Data: parser.curToken.data})
+	parser.nextToken()
+
+	n.addChild(parser.parsePanelBlock())
+
+	return &n
+}
+
 func (parser *Parser) parsePlainTextDef() *Node {
 	n := Node{Kind: N_PLAINTEXT_DEF}
 
@@ -244,6 +264,29 @@ func (parser *Parser) parseButtonBlock() *Node {
 	}
 }
 
+func (parser *Parser) parsePanelBlock() *Node {
+	n := Node{Kind: N_PANEL_BLOCK}
+
+	if parser.curToken.kind != T_L_SQUIRLY {
+		panic("Expected { in panel block")
+	}
+	parser.nextToken()
+
+	for {
+		switch parser.curToken.kind {
+		case T_ILLEGAL:
+			panic("Unexpected end in panel block")
+
+		case T_R_SQUIRLY:
+			return &n
+
+		default:
+			n.addChild(parser.parsePanelBlockStatement())
+			parser.nextToken()
+		}
+	}
+}
+
 func (parser *Parser) parsePlainTextBlock() *Node {
 	n := Node{Kind: N_PLAINTEXT_BLOCK}
 
@@ -314,6 +357,8 @@ func (parser *Parser) parsePageBlockStatement() *Node {
 		return parser.parseBgColorCommand()
 	case T_BUTTON:
 		return parser.parseButtonDef()
+	case T_PANEL:
+		return parser.parsePanelDef()
 	case T_PLAINTEXT:
 		return parser.parsePlainTextDef()
 	default:
@@ -335,6 +380,23 @@ func (parser *Parser) parseButtonBlockStatement() *Node {
 		return parser.parseHCommand()
 	case T_TEXTDATA:
 		return parser.parseTextData()
+	default:
+		panic("Invalid start to block statement")
+	}
+}
+
+func (parser *Parser) parsePanelBlockStatement() *Node {
+	switch parser.curToken.kind {
+	case T_COM_BGCOLOR:
+		return parser.parseBgColorCommand()
+	case T_COM_X:
+		return parser.parseXCommand()
+	case T_COM_Y:
+		return parser.parseYCommand()
+	case T_COM_W:
+		return parser.parseWCommand()
+	case T_COM_H:
+		return parser.parseHCommand()
 	default:
 		panic("Invalid start to block statement")
 	}

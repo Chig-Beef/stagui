@@ -24,6 +24,7 @@ type Page struct {
 	NumPickers      []*NumPicker
 	TextBoxes       []*TextBox
 	PlainTexts      []*PlainText
+	Panels          []*Panel
 
 	// Whether the bg will be drawn
 	BgDraw bool
@@ -66,6 +67,15 @@ func (p *Page) GetTextbox(name string) *TextBox {
 	for i := range len(p.TextBoxes) {
 		if p.TextBoxes[i].Name == name {
 			return p.TextBoxes[i]
+		}
+	}
+	return nil
+}
+
+func (p *Page) GetPanel(name string) *Panel {
+	for i := range len(p.Panels) {
+		if p.Panels[i].Name == name {
+			return p.Panels[i]
 		}
 	}
 	return nil
@@ -141,5 +151,9 @@ func (p *Page) Draw(screen *ebiten.Image, vh VisualHandler) {
 
 	for _, tb := range p.TextBoxes {
 		tb.Draw(screen, vh)
+	}
+
+	for _, panel := range p.Panels {
+		panel.Draw(screen, vh)
 	}
 }

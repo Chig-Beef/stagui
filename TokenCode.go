@@ -7,6 +7,7 @@ const (
 	T_COLOR TokenCode = iota
 	T_PAGE
 	T_BUTTON
+	T_PANEL
 	T_PLAINTEXT
 	T_TEXTDATA
 	T_IDENTIFIER
@@ -49,6 +50,8 @@ func getIdentifierTokenCodeFromString(str string) TokenCode {
 		return T_PAGE
 	case "BUTTON":
 		return T_BUTTON
+	case "PANEL":
+		return T_PANEL
 	case "PLAINTEXT":
 		return T_PLAINTEXT
 	case "TEXTDATA":
