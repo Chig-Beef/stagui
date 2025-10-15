@@ -23,6 +23,6 @@ func (td *TextData) draw(screen *ebiten.Image, vh VisualHandler, x, y float64) {
 		op := text.DrawOptions{}
 		op.PrimaryAlign = td.HorAlign
 		op.SecondaryAlign = td.VerAlign
-		vh.DrawText(td.Text[i], td.Size, x, y+td.TextGap, td.Font, &op)
+		vh.DrawText(td.Text[i], td.Size, x, y+td.TextGap*float64(i), td.Font, &op)
 	}
 }
