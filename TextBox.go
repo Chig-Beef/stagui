@@ -5,47 +5,73 @@ import (
 	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/text/v2"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// Like a text box, but only has one
-// line
 type TextBox struct {
+	Name string
 	X, Y, W, H float64
-
-	Text      []string
-	TextColor color.Color
-	FontSize  float64
-
-	BgColor color.Color
+	Text      TextData
+	Bg, ActiveBg, DisabledBg ImageData
 
 	// Is the user attempting to type
 	// inside the textbox
 	Active bool
 
+	Disabled bool
+
+	// Limit to a single line
+	Inline bool
+
 	// Where in the textbox the user is
 	// typing
 	KeyPosX, KeyPosY int
+
+	// Prevents bleeding
+	buffer *ebiten.Image
 }
 
-func (tb *TextBox) Draw(screen *ebiten.Image, fh FontHandler) {
-	vector.DrawFilledRect(screen, float32(tb.X), float32(tb.Y), float32(tb.W), float32(tb.H), tb.BgColor, false)
-
-	for i := range len(tb.Text) {
-		fh.DrawText(screen, tb.Text[i], tb.FontSize, tb.X+4, tb.Y+2+float64(i)*(tb.FontSize+2), fh.GetFont("textBox"), &text.DrawOptions{})
+func (tb *TextBox) Draw(screen *ebiten.Image, vh VisualHandler) {
+	if tb.checkRecreateBuffer() {
+		// TODO: I don't think this is correct size
+		tb.buffer = ebiten.NewImage(int(tb.W), int(tb.H))
 	}
+
+	// TODO: Draw each individual text
+	tb.drawBackground(screen, vh)
+	tb.Text.draw(tb.buffer, vh, 0, 0)
+	vh.DrawImage(tb.buffer, tb.X, tb.Y, tb.W, tb.H, &ebiten.DrawImageOptions{})
 
 	// Draw a line at the bottom of the textbox
 	if tb.Active {
-		vector.StrokeLine(screen, float32(tb.X), float32(tb.Y+tb.H), float32(tb.X+tb.W), float32(tb.Y+tb.H), 1, color.White, false)
+		vh.DrawLine(tb.X, tb.Y+tb.H, tb.X+tb.W, tb.Y, 1, color.White)
 	}
 }
 
-func (tb *TextBox) CheckClick(mx, my int) bool {
-	x := float64(mx)
-	y := float64(my)
+func (tb *TextBox) checkRecreateBuffer() bool {
+	if tb.buffer == nil {
+		return true
+	}
 
+	// TODO: Correct dimensions
+
+	return false
+}
+
+func (tb *TextBox) drawBackground(screen *ebiten.Image, vh VisualHandler) {
+	if tb.Disabled {
+		tb.DisabledBg.Draw(screen, vh, tb.X, tb.Y, tb.W, tb.H)
+		return
+	}
+
+	if tb.Active {
+		tb.ActiveBg.Draw(screen, vh, tb.X, tb.Y, tb.W, tb.H)
+		return
+	}
+
+	tb.Bg.Draw(screen, vh, tb.X, tb.Y, tb.W, tb.H)
+}
+
+func (tb *TextBox) CheckClick(x, y float64) bool {
 	clicked := tb.X <= x && x <= tb.X+tb.W &&
 		tb.Y <= y && y <= tb.Y+tb.H
 
@@ -57,9 +83,92 @@ func (tb *TextBox) CheckClick(mx, my int) bool {
 	return clicked
 }
 
-func (tb *TextBox) Update() {
-	// ASSERT len(tb.Text) != 0
+func (tb *TextBox) addCharacter(char string) {
+	tb.Text.Text[tb.KeyPosY] = tb.Text.Text[tb.KeyPosY][:tb.KeyPosX] + char + tb.Text.Text[tb.KeyPosY][tb.KeyPosX:]
 
+	// To accomodate longer strings such as tab "  "
+	tb.KeyPosX += len(char)
+}
+
+func (tb *TextBox) move(dir ebiten.Key) {
+	switch dir {
+	case ebiten.KeyArrowLeft:
+		tb.KeyPosX--
+
+		if tb.KeyPosX >= 0 {
+			break
+		}
+
+		if tb.Inline {
+			tb.KeyPosX = 0
+		} else {
+			tb.KeyPosY--
+			if tb.KeyPosY < 0 {
+				tb.KeyPosY = 0
+				tb.KeyPosX = 0
+			} else {
+				if tb.KeyPosX > len(tb.Text.Text[tb.KeyPosY]) {
+					tb.KeyPosX = len(tb.Text.Text[tb.KeyPosY])
+				}
+			}
+		}
+
+	case ebiten.KeyArrowRight:
+		tb.KeyPosX++
+
+		if tb.KeyPosX <= len(tb.Text.Text[tb.KeyPosY]) {
+			break
+		}
+
+		if tb.Inline {
+			tb.KeyPosX = len(tb.Text.Text[tb.KeyPosY])
+		} else {
+			tb.KeyPosY++
+			if tb.KeyPosY >= len(tb.Text.Text) {
+				tb.KeyPosY = len(tb.Text.Text)-1
+				tb.KeyPosX = len(tb.Text.Text[tb.KeyPosY])
+			} else {
+				tb.KeyPosX = 0
+			}
+		}
+
+	case ebiten.KeyArrowUp:
+		if tb.Inline {
+			break
+		}
+
+		tb.KeyPosY--
+		if tb.KeyPosY < 0 {
+			tb.KeyPosY = 0
+		}
+
+		if tb.KeyPosX > len(tb.Text.Text[tb.KeyPosY]) {
+			tb.KeyPosX = len(tb.Text.Text[tb.KeyPosY])
+		}
+
+	case ebiten.KeyArrowDown:
+		if tb.Inline {
+			break
+		}
+
+		tb.KeyPosY++
+		if tb.KeyPosY >= len(tb.Text.Text) {
+			tb.KeyPosY = len(tb.Text.Text) - 1
+		}
+
+		if tb.KeyPosX > len(tb.Text.Text[tb.KeyPosY]) {
+			tb.KeyPosX = len(tb.Text.Text[tb.KeyPosY])
+		}
+
+	case ebiten.KeyEnd:
+		tb.KeyPosX = len(tb.Text.Text[tb.KeyPosY])
+
+	case ebiten.KeyHome:
+		tb.KeyPosX = 0
+	}
+}
+
+func (tb *TextBox) Update() {
 	if !tb.Active {
 		return
 	}
@@ -82,15 +191,15 @@ func (tb *TextBox) Update() {
 	case ebiten.KeyContextMenu:
 
 	case ebiten.KeyEnter:
-		if tb.KeyPosX == len(tb.Text[tb.KeyPosY]) {
-			tb.Text = slices.Insert(tb.Text, tb.KeyPosY+1, "")
+		if tb.KeyPosX == len(tb.Text.Text[tb.KeyPosY]) {
+			tb.Text.Text = slices.Insert(tb.Text.Text, tb.KeyPosY+1, "")
 			tb.KeyPosY++
 			tb.KeyPosX = 0
 			break
 		}
 
-		tb.Text = slices.Insert(tb.Text, tb.KeyPosY+1, tb.Text[tb.KeyPosY][tb.KeyPosX:])
-		tb.Text[tb.KeyPosY] = tb.Text[tb.KeyPosY][:tb.KeyPosX]
+		tb.Text.Text = slices.Insert(tb.Text.Text, tb.KeyPosY+1, tb.Text.Text[tb.KeyPosY][tb.KeyPosX:])
+		tb.Text.Text[tb.KeyPosY] = tb.Text.Text[tb.KeyPosY][:tb.KeyPosX]
 
 		tb.KeyPosY++
 		tb.KeyPosX = 0
@@ -104,7 +213,7 @@ func (tb *TextBox) Update() {
 				break
 			}
 
-			tb.Text[tb.KeyPosY] = tb.Text[tb.KeyPosY][:tb.KeyPosX-1] + tb.Text[tb.KeyPosY][tb.KeyPosX:]
+			tb.Text.Text[tb.KeyPosY] = tb.Text.Text[tb.KeyPosY][:tb.KeyPosX-1] + tb.Text.Text[tb.KeyPosY][tb.KeyPosX:]
 			tb.KeyPosX--
 			break
 		}
@@ -114,103 +223,61 @@ func (tb *TextBox) Update() {
 		// Right at the start
 		if tb.KeyPosX == 0 {
 			// Add this line to the previous line
-			tb.Text[tb.KeyPosY-1] += tb.Text[tb.KeyPosY]
+			tb.Text.Text[tb.KeyPosY-1] += tb.Text.Text[tb.KeyPosY]
 
 			// Delete the line
-			tb.Text = slices.Delete(tb.Text, tb.KeyPosY, tb.KeyPosY+1)
+			tb.Text.Text = slices.Delete(tb.Text.Text, tb.KeyPosY, tb.KeyPosY+1)
 
 			tb.KeyPosY--
-			tb.KeyPosX = len(tb.Text[tb.KeyPosY])
+			tb.KeyPosX = len(tb.Text.Text[tb.KeyPosY])
 			break
 		}
 
 		// Take bit out of line
-		tb.Text[tb.KeyPosY] = tb.Text[tb.KeyPosY][:tb.KeyPosX-1] + tb.Text[tb.KeyPosY][tb.KeyPosX:]
+		tb.Text.Text[tb.KeyPosY] = tb.Text.Text[tb.KeyPosY][:tb.KeyPosX-1] + tb.Text.Text[tb.KeyPosY][tb.KeyPosX:]
 		tb.KeyPosX--
 
 	case ebiten.KeyDelete:
 		// Complete end of text
-		if tb.KeyPosY == len(tb.Text)-1 {
+		if tb.KeyPosY == len(tb.Text.Text)-1 {
 			// End of line
-			if tb.KeyPosX == len(tb.Text[tb.KeyPosY]) {
+			if tb.KeyPosX == len(tb.Text.Text[tb.KeyPosY]) {
 				// Does nothing
 				break
 			}
 
 			// Delete the character
-			tb.Text[tb.KeyPosY] = tb.Text[tb.KeyPosY][:tb.KeyPosX] + tb.Text[tb.KeyPosY][tb.KeyPosX+1:]
+			tb.Text.Text[tb.KeyPosY] = tb.Text.Text[tb.KeyPosY][:tb.KeyPosX] + tb.Text.Text[tb.KeyPosY][tb.KeyPosX+1:]
 			break
 		}
 
 		// Somewhere beforehand
-		if tb.KeyPosX == len(tb.Text[tb.KeyPosY]) {
+		if tb.KeyPosX == len(tb.Text.Text[tb.KeyPosY]) {
 			// Move next line onto this line
-			tb.Text[tb.KeyPosY] += tb.Text[tb.KeyPosY+1]
+			tb.Text.Text[tb.KeyPosY] += tb.Text.Text[tb.KeyPosY+1]
 
 			// Delete the next line
-			tb.Text = slices.Delete(tb.Text, tb.KeyPosY+1, tb.KeyPosY+2)
+			tb.Text.Text = slices.Delete(tb.Text.Text, tb.KeyPosY+1, tb.KeyPosY+2)
 			break
 		}
 
 		// There's no character to delete
-		if len(tb.Text[tb.KeyPosY]) == 0 {
+		if len(tb.Text.Text[tb.KeyPosY]) == 0 {
 			break
 		}
 
 		// Delete that single character
-		tb.Text[tb.KeyPosY] = tb.Text[tb.KeyPosY][:tb.KeyPosX] + tb.Text[tb.KeyPosY][tb.KeyPosX+1:]
+		tb.Text.Text[tb.KeyPosY] = tb.Text.Text[tb.KeyPosY][:tb.KeyPosX] + tb.Text.Text[tb.KeyPosY][tb.KeyPosX+1:]
 
-	case ebiten.KeyEnd:
-		tb.KeyPosX = len(tb.Text[tb.KeyPosY])
-
-	case ebiten.KeyHome:
-		tb.KeyPosX = 0
-
-	case ebiten.KeyArrowLeft:
-		if tb.KeyPosX == 0 {
-			tb.KeyPosY--
-			if tb.KeyPosY < 0 {
-				tb.KeyPosY = 0
-			}
-			break
-		}
-		tb.KeyPosX--
-
-	case ebiten.KeyArrowRight:
-		if tb.KeyPosX == len(tb.Text[tb.KeyPosX]) {
-			if tb.KeyPosY < len(tb.Text) {
-				tb.KeyPosY++
-			}
-			break
-		}
-		tb.KeyPosX++
-
-	case ebiten.KeyArrowUp:
-		tb.KeyPosY--
-		if tb.KeyPosY < 0 {
-			tb.KeyPosY = 0
-		}
-
-		if tb.KeyPosX > len(tb.Text[tb.KeyPosY]) {
-			tb.KeyPosX = len(tb.Text[tb.KeyPosY])
-		}
-
-	case ebiten.KeyArrowDown:
-		tb.KeyPosY++
-		if tb.KeyPosY >= len(tb.Text) {
-			tb.KeyPosY = len(tb.Text) - 1
-		}
-
-		if tb.KeyPosX > len(tb.Text[tb.KeyPosY]) {
-			tb.KeyPosX = len(tb.Text[tb.KeyPosY])
-		}
+	case ebiten.KeyArrowLeft,
+		ebiten.KeyArrowRight,
+		ebiten.KeyArrowUp,
+		ebiten.KeyArrowDown,
+		ebiten.KeyEnd,
+		ebiten.KeyHome:
+		tb.move(key)
 
 	default:
-		tb.Text[tb.KeyPosY] = tb.Text[tb.KeyPosY][:tb.KeyPosX] + keyText + tb.Text[tb.KeyPosY][tb.KeyPosX:]
-		if key == ebiten.KeyTab {
-			tb.KeyPosX += 2
-		} else {
-			tb.KeyPosX++
-		}
+		tb.addCharacter(keyText)
 	}
 }

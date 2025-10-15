@@ -11,15 +11,19 @@ import (
 // Page is for things like the menu,
 // the settings page, etc.
 type Page struct {
+	Name string
+
 	// Drawn at the top middle of the page
 	Title string
 
 	// Content of the page
 	Buttons         []*Button
 	Sliders         []*Slider
-	Text            []*StaticText
-	InlineTextBoxes []*InlineTextBox
+	Checkboxes      []*Checkbox
+	Images          []*Image
+	NumPickers      []*NumPicker
 	TextBoxes       []*TextBox
+	PlainTexts      []*PlainText
 
 	// Whether the bg will be drawn
 	BgDraw bool
@@ -31,8 +35,44 @@ type Page struct {
 	BgImg *ebiten.Image
 }
 
+func (p *Page) GetButton(name string) *Button {
+	for i := range len(p.Buttons) {
+		if p.Buttons[i].Name == name {
+			return p.Buttons[i]
+		}
+	}
+	return nil
+}
+
+func (p *Page) GetSlider(name string) *Slider {
+	for i := range len(p.Sliders) {
+		if p.Sliders[i].Name == name {
+			return p.Sliders[i]
+		}
+	}
+	return nil
+}
+
+func (p *Page) GetText(name string) *PlainText {
+	for i := range len(p.PlainTexts) {
+		if p.PlainTexts[i].Name == name {
+			return p.PlainTexts[i]
+		}
+	}
+	return nil
+}
+
+func (p *Page) GetTextbox(name string) *TextBox {
+	for i := range len(p.TextBoxes) {
+		if p.TextBoxes[i].Name == name {
+			return p.TextBoxes[i]
+		}
+	}
+	return nil
+}
+
 // Interaction logic of all content
-func (p *Page) Update(curMousePos [2]int) (string, *Button, *Slider) {
+func (p *Page) Update(curMousePos [2]float64) (string, *Button, *Slider) {
 	for _, s := range p.Sliders {
 		if s.Update(curMousePos) {
 			return s.Name, nil, s
@@ -40,9 +80,6 @@ func (p *Page) Update(curMousePos [2]int) (string, *Button, *Slider) {
 	}
 
 	// Key press
-	for _, itb := range p.InlineTextBoxes {
-		itb.Update()
-	}
 	for _, tb := range p.TextBoxes {
 		tb.Update()
 	}
@@ -55,15 +92,12 @@ func (p *Page) Update(curMousePos [2]int) (string, *Button, *Slider) {
 	}
 
 	for _, b := range p.Buttons {
-		if b.CheckClick(float64(curMousePos[0]), float64(curMousePos[1])) {
+		if b.CheckClick(curMousePos[0], curMousePos[1]) {
 			return b.Name, b, nil
 		}
 	}
 
 	// Mouse press
-	for _, itb := range p.InlineTextBoxes {
-		itb.CheckClick(curMousePos[0], curMousePos[1])
-	}
 	for _, tb := range p.TextBoxes {
 		tb.CheckClick(curMousePos[0], curMousePos[1])
 	}
@@ -71,14 +105,14 @@ func (p *Page) Update(curMousePos [2]int) (string, *Button, *Slider) {
 	return "", nil, nil
 }
 
-func (p *Page) Draw(screen *ebiten.Image, ih ImageHandler, fh FontHandler, sw, sh, hw int) {
+func (p *Page) Draw(screen *ebiten.Image, vh VisualHandler) {
 	// Really I don't like that we're
 	// filling the screen every frame for
 	// no apparent reason, but it's a title
 	// screen, so I don't know why I care
 	if p.BgDraw {
 		if p.BgImg != nil {
-			ih.DrawImage(screen, p.BgImg, 0, 0, float64(sw), float64(sh), &ebiten.DrawImageOptions{})
+			vh.DrawImage(p.BgImg, 0, 0, 100, 50, &ebiten.DrawImageOptions{})
 		} else {
 			screen.Fill(p.BgColor)
 		}
@@ -88,28 +122,24 @@ func (p *Page) Draw(screen *ebiten.Image, ih ImageHandler, fh FontHandler, sw, s
 	if p.Title != "" {
 		op := text.DrawOptions{}
 		op.PrimaryAlign = text.AlignCenter
-		fh.DrawText(screen, p.Title, 100, float64(hw), 10, fh.GetFont("default"), &op)
+		vh.DrawText(p.Title, 8, 50, 1, vh.GetFont("default"), &op)
 	}
 
 	// Content
 
-	for _, t := range p.Text {
-		t.Draw(screen)
+	for _, t := range p.PlainTexts {
+		t.Draw(screen, vh)
 	}
 
 	for _, b := range p.Buttons {
-		b.Draw(screen, ih, fh)
+		b.Draw(screen, vh)
 	}
 
 	for _, s := range p.Sliders {
-		s.Draw(screen)
-	}
-
-	for _, itb := range p.InlineTextBoxes {
-		itb.Draw(screen, fh)
+		s.Draw(screen, vh)
 	}
 
 	for _, tb := range p.TextBoxes {
-		tb.Draw(screen, fh)
+		tb.Draw(screen, vh)
 	}
 }

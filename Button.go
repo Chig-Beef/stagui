@@ -1,69 +1,68 @@
 package stagui
 
 import (
-	"image/color"
-
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type Button struct {
-	X, Y, W, H float64
-
 	// Used to identify the button
 	Name string
+
+	X, Y, W, H float64
+
+	Text, PressedText, DisabledText TextData
+	Bg, PressedBg, DisabledBg ImageData
 
 	// Whether the button can be used
 	Disabled bool
 
 	// Good for toggle buttons
 	Pressed bool
-
-	// Text to display on the button
-	Text      string
-	FontSize  float64
-	TextColor color.Color
-
-	// Color of image of button
-	BgColor color.Color
-	BgImg   *ebiten.Image
-
-	// The color if pressed
-	PressedColor color.Color
-
-	// The color if disabled
-	DisabledColor color.Color
 }
 
-func (b *Button) Draw(screen *ebiten.Image, ih ImageHandler, fh FontHandler) {
-	// Draw bg
-	if b.BgImg == nil {
-		b.drawAsSolidColor(screen)
-	} else {
-		ih.DrawImage(screen, b.BgImg, float64(b.X), float64(b.Y), float64(b.W), float64(b.H), &ebiten.DrawImageOptions{})
-	}
-
-	// Draw text
-	if b.Text != "" {
-		op := text.DrawOptions{}
-		op.PrimaryAlign = text.AlignCenter
-		op.ColorScale.ScaleWithColor(b.TextColor)
-		fh.DrawText(screen, b.Text, b.FontSize, float64(b.X+b.W/2), float64(b.Y), fh.GetFont("button"), &op)
-	}
+func (b *Button) Draw(screen *ebiten.Image, vh VisualHandler) {
+	b.drawBackground(screen, vh)
+	b.Text.draw(screen, vh, b.getTextX(), b.getTextY())
 }
 
-func (b *Button) drawAsSolidColor(screen *ebiten.Image) {
+func (b *Button) getTextX() float64 {
+	switch b.Text.HorAlign {
+	case text.AlignStart:
+		return b.X
+	case text.AlignCenter:
+		return b.X+b.W/2
+	case text.AlignEnd:
+		return b.X+b.W
+	}
+	return b.X
+}
+
+// TODO: Check this works correctly
+func (b *Button) getTextY() float64 {
+	switch b.Text.VerAlign {
+	case text.AlignStart:
+		return b.Y
+	case text.AlignCenter:
+		return b.Y+b.H/2
+	case text.AlignEnd:
+		return b.Y+b.H
+	}
+	return b.Y
+}
+
+func (b *Button) drawBackground(screen *ebiten.Image, vh VisualHandler) {
 	if b.Disabled {
-		vector.DrawFilledRect(screen, float32(b.X), float32(b.Y), float32(b.W), float32(b.H), b.DisabledColor, false)
+		b.DisabledBg.Draw(screen, vh, b.X, b.Y, b.W, b.H)
 		return
 	}
 
 	if b.Pressed {
-		vector.DrawFilledRect(screen, float32(b.X), float32(b.Y), float32(b.W), float32(b.H), b.PressedColor, false)
-	} else {
-		vector.DrawFilledRect(screen, float32(b.X), float32(b.Y), float32(b.W), float32(b.H), b.BgColor, false)
+		b.PressedBg.Draw(screen, vh, b.X, b.Y, b.W, b.H)
+		return
 	}
+
+	b.Bg.Draw(screen, vh, b.X, b.Y, b.W, b.H)
 }
 
 func (b Button) CheckClick(x, y float64) bool {

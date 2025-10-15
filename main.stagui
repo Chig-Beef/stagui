@@ -1,0 +1,153 @@
+COLOR "black" {
+		RED 0
+		GREEN 0
+		BLUE 0
+}
+
+COLOR "white" {
+		RED 255
+		GREEN 255
+		BLUE 255
+}
+
+COLOR "red" {
+		RED 255
+		GREEN 0
+		BLUE 0
+}
+
+COLOR "buttonColor" {
+		RED 64
+		GREEN 64
+		BLUE 64
+}
+
+COLOR "textBoxColor" {
+		RED 96
+		GREEN 96
+		BLUE 96
+}
+
+COLOR "sliderColor" {
+		RED 128
+		GREEN 128
+		BLUE 128
+}
+
+PAGE "title" {
+		BGDRAW
+		BGCOLOR "black"
+
+		BUTTON "start" {
+				X 45
+				Y 10
+				W 10
+				H 5
+				Text "Demo Game"
+				FontSize 3
+				BgColor "buttonColor"
+				TextColor "white"
+		}
+
+		BUTTON "collection" {
+				X 45
+				Y 16
+				W 10
+				H 5
+				Text "Collection"
+				FontSize 3
+				BgColor "buttonColor"
+				TextColor "white"
+		}
+}
+
+PAGE "collection" {
+		BUTTON "back" {
+				X 1
+				Y 1
+				W 10
+				H 5
+				Text "Back"
+				FontSize 3
+				BgColor "buttonColor"
+				TextColor "white"
+		}
+
+		BUTTON "ninjas" {
+				X 12
+				Y 1
+				W 10
+				H 5
+				Text "Ninjas"
+				FontSize 3
+				BgColor "buttonColor"
+				TextColor "white"
+		}
+
+		BUTTON "cowboys" {
+				X 23
+				Y 1
+				W 10
+				H 5
+				Text "Cowboys"
+				FontSize 3
+				BgColor "buttonColor"
+				TextColor "white"
+		}
+}
+
+PAGE "game" {
+		BUTTON "back" {
+				X 1
+				Y 1
+				W 10
+				H 5
+				Text "Back"
+				FontSize 3
+				BgColor "buttonColor"
+				TextColor "white"
+		}
+
+		BUTTON "next" {
+				X 12
+				Y 1
+				W 10
+				H 5
+				Text "Next Phase"
+				FontSize 3
+				BgColor "buttonColor"
+				TextColor "white"
+		}
+}
+
+PAGE "ninjaWin" {
+		#BGDRAW
+		#BGCOLOR "black"
+
+		#BUTTON "continue" {
+				X 1
+				Y 1
+				W 10
+				H 5
+				Text "Continue"
+				FontSize 3
+				BgColor "buttonColor"
+				TextColor "white"
+		}
+}
+
+PAGE "cowboyWin" {
+		#BGDRAW
+		#BGCOLOR "black"
+
+		#BUTTON "continue" {
+				X 1
+				Y 1
+				W 10
+				H 5
+				Text "Continue"
+				FontSize 3
+				BgColor "buttonColor"
+				TextColor "white"
+		}
+}
