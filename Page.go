@@ -72,6 +72,15 @@ func (p *Page) GetTextbox(name string) *TextBox {
 	return nil
 }
 
+func (p *Page) GetPlainText(name string) *PlainText {
+	for i := range len(p.PlainTexts) {
+		if p.PlainTexts[i].Name == name {
+			return p.PlainTexts[i]
+		}
+	}
+	return nil
+}
+
 func (p *Page) GetPanel(name string) *Panel {
 	for i := range len(p.Panels) {
 		if p.Panels[i].Name == name {
@@ -151,6 +160,10 @@ func (p *Page) Draw(screen *ebiten.Image, vh VisualHandler) {
 
 	for _, tb := range p.TextBoxes {
 		tb.Draw(screen, vh)
+	}
+
+	for _, plainText := range p.PlainTexts {
+		plainText.Draw(screen, vh)
 	}
 
 	for _, panel := range p.Panels {
