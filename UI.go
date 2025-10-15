@@ -300,7 +300,7 @@ func (ui *UI) loadTextGapCommand(node *Node, textData *TextData) {
 	if err != nil {
 		panic(err)
 	}
-	textData.Size = textGap
+	textData.TextGap = textGap
 }
 
 func (ui *UI) loadTextColorCommand(node *Node, textData *TextData) {
